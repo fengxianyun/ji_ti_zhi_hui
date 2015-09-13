@@ -1,0 +1,7 @@
+#coding:gbk
+'''
+Created on 2015Äê8ÔÂ6ÈÕ
+
+@author: fxy
+'''
+from random import random,randint
