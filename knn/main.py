@@ -8,6 +8,7 @@ import knn
 import knn2
 from  numpy import *
 import csv
+import numpy
 
 
 knn2.dowith()

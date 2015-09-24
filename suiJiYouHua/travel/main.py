@@ -5,6 +5,7 @@ Created on 2015Äê8ÔÂ13ÈÕ
 @author: fxy
 '''
 import optimization
+optimization.getdata()
 # s=[1,4,3,2,7,3,6,3,2,4,5,3]
 # print optimization.printschedule(s)
 # print optimization.schedulecost(s)

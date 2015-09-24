@@ -7,34 +7,35 @@ from  sklearn.utils import  shuffle
 from lasagne import layers
 from lasagne.updates import nesterov_momentum
 from nolearn.lasagne import NeuralNet
+from matplotlib import pyplot
 
 __author__ = 'fxy'
 TRAIN='E:\\面部识别\\training.csv'
 TEST='E:\\面部识别\\test.csv'
 
-net1= NeuralNet(layers=
-                [#three layers:one hidden layers
-                 ('input',layers.InputLayer),
-                 ('hidden',layers.DenseLayer),
-                 ('output',layers.DenseLayer) 
-                 ],
-                # layer parameters
-                input_shape=(None,9216),#每张图片大小96*96
-                hidden_num_units=100,#隐藏层节点个数
-                output_nonlinearity=None,
-                output_num_units=30,#30个目标值
-                
-                #optimization method
-                update=nesterov_momentum,
-                update_learning_rate=0.01,
-                update_momentum=0.9,
-                
-                regression=True, # flag to indicate we're dealing with regression problem
-                max_epochs=400,#训练个数
-                verbose=1,
-                )
+net1 = NeuralNet(
+layers=[  # three layers: one hidden layer
+    ('input', layers.InputLayer),
+    ('hidden', layers.DenseLayer),
+    ('output', layers.DenseLayer),
+    ],
+# layer parameters:
+input_shape=(None, 9216),  # 96x96 input pixels per batch
+hidden_num_units=100,  # number of units in hidden layer
+output_nonlinearity=None,  # output layer uses identity function
+output_num_units=30,  # 30 target values
 
-def loads(test=False,cols=None):
+# optimization method:
+update=nesterov_momentum,
+update_learning_rate=0.01,
+update_momentum=0.9,
+
+regression=True,  # flag to indicate we're dealing with regression problem
+max_epochs=400,  # we want to train this many epochs
+verbose=1,
+)
+
+def load(test=False,cols=None):
     #如果test为true则读取TEST的路径，否则读取TRAIN的路径
     fname=TEST if test else  TRAIN
     df=read_csv(os.path.expanduser(fname))
@@ -55,9 +56,86 @@ def loads(test=False,cols=None):
         y=None
     return X,y
 
-X,y=loads()
-print("X.shape == {}; X.min == {:.3f}; X.max == {:.3f}".format(
-X.shape, X.min(), X.max()))
-print("y.shape == {}; y.min == {:.3f}; y.max == {:.3f}".format(
-y.shape, y.min(), y.max()))
-net1.fit(X, y)
+# X,y=load()
+# print("X.shape == {}; X.min == {:.3f}; X.max == {:.3f}".format(
+# X.shape, X.min(), X.max()))
+# print("y.shape == {}; y.min == {:.3f}; y.max == {:.3f}".format(
+# y.shape, y.min(), y.max()))
+# net1.fit(X, y)
+#  
+# train_loss=[]
+# valid_loss=[]
+# for i in range(len(net1.train_history_)):
+#     print i
+#     train_loss.append(np.array([net1.train_history_[i]["train_loss"]]))
+#     valid_loss.append(np.array([net1.train_history_[i]["valid_loss"]]))
+# pyplot.plot(train_loss, linewidth=3, label="train")
+# pyplot.plot(valid_loss, linewidth=3, label="valid")
+# pyplot.grid()
+# pyplot.legend()
+# pyplot.xlabel("epoch")
+# pyplot.ylabel("loss")
+# pyplot.ylim(1e-3, 1e-2)
+# pyplot.yscale("log")
+# pyplot.show()
+
+def plot_sample(x, y, axis):
+    img = x.reshape(96, 96)
+    axis.imshow(img, cmap='gray')
+    axis.scatter(y[0::2] * 48 + 48, y[1::2] * 48 + 48, marker='x', s=10)
+
+# X, _ = load(test=True)
+# y_pred = net1.predict(X)
+# 
+# fig = pyplot.figure(figsize=(6, 6))
+# fig.subplots_adjust(
+#     left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
+# 
+# for i in range(16):
+#     ax = fig.add_subplot(4, 4, i + 1, xticks=[], yticks=[])
+#     plot_sample(X[i], y_pred[i], ax)
+# 
+# pyplot.show()
+
+def load2d(test=False,cols=None):
+    X,y=load(test=test)
+    X=X.reshape(-1,1,96,96)
+    return  X,y
+
+net2 = NeuralNet(
+    layers=[
+            ('input', layers.InputLayer),
+            ('conv1', layers.Conv2DLayer),
+            ('pool1', layers.MaxPool2DLayer),
+            ('conv2', layers.Conv2DLayer),
+            ('pool2', layers.MaxPool2DLayer),
+            ('conv3', layers.Conv2DLayer),
+            ('pool3', layers.MaxPool2DLayer),
+            ('hidden4', layers.DenseLayer),
+            ('hidden5', layers.DenseLayer),
+            ('output', layers.DenseLayer),
+            ],
+        input_shape=(None, 1, 96, 96),
+        conv1_num_filters=32, conv1_filter_size=(3, 3), pool1_ds=(2, 2),
+        conv2_num_filters=64, conv2_filter_size=(2, 2), pool2_ds=(2, 2),
+        conv3_num_filters=128, conv3_filter_size=(2, 2), pool3_ds=(2, 2),
+        hidden4_num_units=500, hidden5_num_units=500,
+        output_num_units=30, output_nonlinearity=None,
+
+        update_learning_rate=0.01,
+        update_momentum=0.9,
+
+        regression=True,
+        max_epochs=1000,
+        verbose=1,
+    )
+
+X,y = load2d()  # load 2-d data
+net2.fit(X, y)
+
+
+    # Training for 1000 epochs will take a while.  We'll pickle the
+    # trained model so that we can load it back later:
+import cPickle as pickle
+with open('net2.pickle', 'wb') as f:
+    pickle.dump(net2, f, -1)

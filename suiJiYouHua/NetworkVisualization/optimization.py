@@ -20,12 +20,12 @@ destination='LGA'
 
 flights={}
 #
-for line in file('schedule.txt'):
-    origin,dest,depart,arrive,price=line.strip().split(',')
-    flights.setdefault((origin,dest),[])
-    
-    #将航班详情加入航班列表
-    flights[(origin,dest)].append((depart,arrive,int(price)))
+def getdata():
+    for line in file('schedule.txt'):
+        origin,dest,depart,arrive,price=line.strip().split(',')
+        flights.setdefault((origin,dest),[])
+        #将航班详情加入航班列表
+        flights[(origin,dest)].append((depart,arrive,int(price)))
 
 def getminutes(t):
     x=time.strptime(t, '%H:%M')
@@ -209,6 +209,8 @@ def geneticoptimize(domain,costf,popsize=100,step=1,
                 c2=random.randint(0,topelite)
                 pop.append(crossover(ranked[c1], ranked[c2]))
             #打印当前最优值
+        print i,"代"
         print scores[0][0]
+        print scores[0][1]
         
     return scores[0][1]    

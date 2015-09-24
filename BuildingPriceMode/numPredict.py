@@ -6,7 +6,9 @@ Created on 2015年9月12日
 '''
 from random import random,randint
 import math
-from audioop import avg
+from pylab import *
+
+weightdomain=[(0,20)]*4
 
 def wineprice(rating,age):
     #输入等级和年代
@@ -51,14 +53,26 @@ def wineset2():
     for i in range(300):
         rating=random()*50+50
         age=random()*50
+        #通道信息（多余）
         aise=float(randint(1,20))
+        #瓶子大小
         bottlesize=[375.0,750.0,1500.0,3000.0][randint(0,3)]
         price=wineprice(rating, age)
         price*=(bottlesize/750)
-        price*=(random()*0.9+0.2)
+        price*=(random()*0.4+0.8)
         rows.append({'input':(rating,age,aise,bottlesize),'result':price})
     return rows
 
+def wineset3():
+    #创造不对称分布的数据
+    
+    rows=wineset1()
+    for row in rows:
+        if random()<0.5:
+            #葡萄酒是从折扣店购得
+            row['result']*=0.5
+    return rows
+    
 
 def euclidean(v1,v2):
     #定义相似度
@@ -103,12 +117,12 @@ def subtractweight(dist,const=1.0):
     else:
         return const-dist
 
-def gussian(dist,sigma=10.0):
+def gaussian(dist,sigma=10.0):
     #为近邻分配权重
     #高斯函数
     return math.e**(-dist**2/(2*sigma**2))
 
-def weightedknn(data,vec1,k=5,weightf=gussian):
+def weightedknn(data,vec1,k=5,weightf=gaussian):
     
     
     #得到距离值
@@ -166,6 +180,79 @@ def rescale(data,scale):
         scaled=[scale[i]*row['input'][i] for i in range(len(scale))]
         scaleddate.append({'input':scaled,'result':row['result']})
     return scaleddate
-    
-    
 
+def creatcostfunction(algf,data):
+    def costf(scale):
+        sdata=rescale(data, scale)
+        return crossvalidate(algf, data, trials=10)
+    return  costf
+    
+def probguess(data,vec1,low,high,k=5,weightf=gaussian):
+    #计算范围内的权重值
+    #data数据集
+    #vec中心点
+    #low范围最小值
+    #high范围最大值
+    #k取中心点附近点的个数
+    #计算权值的方法
+    
+    dlist=getdistances(data, vec1)
+    nweight=0.0
+    tweight=0.0
+    for i in range(k):
+        dist=dlist[i][0]
+        idx=dlist[i][1]
+        weight=weightf(dist)
+        v=data[idx]['result']
+        
+        #当前数据位于指定范围吗
+        if v>=low and v<=high:
+            nweight+=weight
+        tweight+=weight
+    if tweight==0:
+        return 0
+    return nweight/tweight
+
+def cumulativegraph(data,vec1,high,k=5,weightf=gaussian):
+    #绘制递增式的概率分布图
+    #data数据集
+    #vec中心点
+    #high范围最大值
+    #k取中心点附近点的个数
+    #计算权值的方法
+    
+    t1=arange(0.0,high,0.1)
+    cprob=array([probguess(data, vec1, 0, v, k, weightf) for v in t1])
+    plot(t1,cprob)
+    show()
+
+def probabilitygrah(data,vec1,high,k=5,weightf=gaussian,ss=5.0):
+    #绘制高斯式的概率分布图
+    #data数据集
+    #vec中心点
+    #high范围最大值
+    #k取中心点附近点的个数
+    #计算权值的方法
+    
+    #建立一个代表价格的值域范围
+    t1=arange(0.0,high,0.1)
+    
+    #得到整个概率范围内所有概率
+    probs=[probguess(data, vec1, v, v+0.1, k, weightf) for v in t1]
+    
+    #通过加上近邻的高斯计算结果，对概率做平滑处理
+    smoothed=[]
+    for i in range(len(probs)):
+        sv=0.0
+        for j in range(0,len(probs)):
+            dist=abs(i-j)*0.1
+            weight=gaussian(dist, sigma=ss)
+            sv+=weight*probs[j]
+        smoothed.append(sv)
+    smoothed=array(smoothed)
+    
+    plot(t1,smoothed)
+    plot(t1,array(probs))
+    show()
+            
+            
