@@ -18,10 +18,10 @@ import DrawTree
 # print treepredict.giniImpurity(set1)
 # print treepredict.entropy(set1)
 
-# #测试buildTree
-# tree=treepredict.buildTree(data.my_data)
-# draw=DrawTree.DrawTree(tree,'treeview.jpg')
-# draw.drawTree()
+#测试buildTree
+tree=treepredict.buildTree(data.my_data)
+draw=DrawTree.DrawTree(tree,'treeview.jpg')
+draw.drawTree()
 
 # #使用classify函数进行预测
 # tree=treepredict.buildTree(data.my_data)
